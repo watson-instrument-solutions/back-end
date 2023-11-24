@@ -33,6 +33,11 @@ const EquipmentSchema = new Schema({
         unique: false,
         required: false
     },
+    stock: {
+        type: Number,
+        unique: false,
+        required: true
+    },
     bookedDates: [
         {
             startDate: {
@@ -75,4 +80,4 @@ EquipmentSchema.methods.removeBookedDates = async function (startDate, endDate) 
 
   const Equipment = mongoose.model('Equipment', EquipmentSchema)
 
-module.exports = { Van }
+module.exports = { Equipment }
