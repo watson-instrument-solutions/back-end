@@ -2,6 +2,8 @@ const express = require('express');
 const { User } = require('../models/UserModel');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const { generateJwt } = require('../functions');
+
 
 // GET all users
 router.get('/all', async (request, response) => {
@@ -30,7 +32,7 @@ router.get('/one/name/:name', async (request, response) => {
     });
 });
 
-//  CREATE a user
+//  POST to CREATE a user
 // localhost3000:users/register-account
 router.post('/register-account', async (request, response) => 
 {
@@ -75,13 +77,28 @@ router.post('/register-account', async (request, response) =>
     }
   });
 
-// {
-//     let result = await User.create(request.body);
 
-//     response.json({
-//         user: result
-//     });
-// });
+//  POST to LOG IN
+// localhost3000:users/login
+  router.post("/login", async (request, response) => {
+    const user = await User.findOne({ email: request.body.email });
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+  
+    const pwMatch = await bcrypt.compare(request.body.password, user.password);
+    if (!pwMatch) {
+      return response.status(400).json({ message: "Incorrect password" });
+    }
+  
+    let freshJwt = generateJwt(user._id.toString());
+
+	  // respond with the JWT 
+	    response.json({
+		    jwt: freshJwt
+	  });
+  });
+
 
 //  UPDATE an existing user
 router.patch('/;id', async (request, response) => {
