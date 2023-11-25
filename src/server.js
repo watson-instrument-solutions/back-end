@@ -15,6 +15,9 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
+const UserRouter = require('./controllers/UserController');
+app.use('/users', UserRouter)
+
 // some comment here to trigger nodemon into restarting
 
 // GET localhost:3000/ 
