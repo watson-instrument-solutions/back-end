@@ -2,12 +2,19 @@ const express = require('express');
 const { User } = require('../models/UserModel');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const { generateJwt } = require('../functions');
+const { generateJwt, authenticate } = require('../functions');
 
 
-// GET all users
-router.get('/all', async (request, response) => {
-    let result = await User.find({});
+// GET all users route for admin only
+router.get('/all', authenticate, async (request, response) => {
+  if (!request.user.admin) {
+    return response.status(403).json({ message: 'Unauthorised' });
+  }  
+  
+  let result = await User.find({});
+  if (!result) {
+    return response.status(400).json({ message:'No users found' });
+  }
 
     response.json({
         user: result
