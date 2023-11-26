@@ -3,6 +3,9 @@ const { User } = require('../models/UserModel');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const { generateJwt, authenticate } = require('../functions');
+const { Booking } = require('../models/BookingModel');
+const { Equipment } = require('../models/EquipmentModel')
+
 
 
 // GET all users route for admin only
@@ -22,6 +25,7 @@ router.get('/all', authenticate, async (request, response) => {
     });
 });
 
+
 // GET current user for dashboard
 // localhost:3000/users/me
 router.get('/me', authenticate, async (request, response) => {
@@ -37,14 +41,6 @@ router.get('/me', authenticate, async (request, response) => {
   }
 });
 
-// GET one user by name
-router.get('/one/name/:name', async (request, response) => {
-    let result = null;
-
-    response.json({
-        user: result
-    });
-});
 
 //  POST to CREATE a user
 // localhost3000:users/register-account
@@ -97,7 +93,7 @@ router.post('/register-account', async (request, response) =>
   router.post("/login", async (request, response) => {
     const user = await User.findOne({ email: request.body.email });
     if (!user) {
-      return res.status(400).json({ message: "User not found" });
+      return response.status(400).json({ message: "User not found" });
     }
   
     const pwMatch = await bcrypt.compare(request.body.password, user.password);
@@ -123,13 +119,56 @@ router.patch('/;id', async (request, response) => {
     });
 });
 
-// Find user by id and delete
-router.delete('/:id', async (request, response) => {
-    let result = null;
+// Delete route for current use
+// localhost:3000/users/deleteme
+router.delete("/delete-me", authenticate, async (request, response) => {
+  try {
+    // Check if the user exists
+    if (!request.user || !request.user._id) {
+      return response.status(400)
+        .json({ message: "No account found" });
+    }
 
-    response.json({
-        user: result
-    });
+    // Find all the bookings associated with the user
+    const bookings = await Booking.find({ user: request.user._id });
+
+    // Iterate through the bookings and update the equipment and delete the bookings
+    for (const booking of bookings) {
+      const equipmentId = booking.equipment;
+      const equipment = await Equipment.findById(equipmentId);
+
+      if (equipment) {
+        // Remove the bookedDates associated with the booking from the equipment
+        equipment.bookedDates = equipment.bookedDates.filter((bookedDate) => {
+          return !(
+            bookedDate.startDate.getTime() ===
+              new Date(booking.startDate).getTime() &&
+            bookedDate.endDate.getTime() === new Date(booking.endDate).getTime()
+          )
+        });
+
+        await equipment.save(); // save the changes to the equipment
+      }
+
+      await booking.deleteOne(); // delete the booking
+    }
+
+
+    // Attempt to delete the user
+    const user = await User.findByIdAndDelete(request.user._id);
+
+    // Check if the user was deleted successfully
+    if (!user) {
+      return response.status(400)
+        .json({ message: "User not found or could not be deleted" });
+    }
+
+    response.json({ message: "Account deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    response.status(500)
+      .json({ message: "An error occurred while trying to delete account" });
+  }
 });
 
 
