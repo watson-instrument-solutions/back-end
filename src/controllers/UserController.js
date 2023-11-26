@@ -26,7 +26,7 @@ router.get('/all', authenticate, async (request, response) => {
 });
 
 
-// GET current user for dashboard
+// GET current user for user dashboard
 // localhost:3000/users/me
 router.get('/me', authenticate, async (request, response) => {
   try {
@@ -37,7 +37,7 @@ router.get('/me', authenticate, async (request, response) => {
     response.json(user);
   } catch (error) {
     console.error(error);
-    response.status(500).json({ message:'An erro occured while fetching user data' });
+    response.status(500).json({ message:'An error occurred while fetching user data' });
   }
 });
 
@@ -52,7 +52,7 @@ router.post('/register-account', async (request, response) =>
       if (existingUser) {
         return response
           .status(400)
-          .json({ message: "A user with this email already exists" });
+          .json({ message: "A user with this email address already exists" });
       }
     //   make sure password is at least 8 characters
       const { password } = request.body;
@@ -61,7 +61,7 @@ router.post('/register-account', async (request, response) =>
           .status(400)
           .json({ message: "Password should be at least 8 characters long" });
       }
-  
+      // return user with hashed password
       const hashedPassword = await bcrypt.hash(password, 10);
   
       const user = new User({
@@ -119,8 +119,8 @@ router.patch('/;id', async (request, response) => {
     });
 });
 
-// Delete route for current use
-// localhost:3000/users/deleteme
+// DELETE route for current user
+// localhost:3000/users/delete-me
 router.delete("/delete-me", authenticate, async (request, response) => {
   try {
     // Check if the user exists
@@ -132,7 +132,7 @@ router.delete("/delete-me", authenticate, async (request, response) => {
     // Find all the bookings associated with the user
     const bookings = await Booking.find({ user: request.user._id });
 
-    // Iterate through the bookings and update the equipment and delete the bookings
+    // Iterate through the bookings, update the equipment and delete the bookings
     for (const booking of bookings) {
       const equipmentId = booking.equipment;
       const equipment = await Equipment.findById(equipmentId);
@@ -146,15 +146,15 @@ router.delete("/delete-me", authenticate, async (request, response) => {
             bookedDate.endDate.getTime() === new Date(booking.endDate).getTime()
           )
         });
-
-        await equipment.save(); // save the changes to the equipment
+        // save the changes to the equipment
+        await equipment.save(); 
       }
-
-      await booking.deleteOne(); // delete the booking
+      // delete the booking
+      await booking.deleteOne(); 
     }
 
 
-    // Attempt to delete the user
+    // delete the user
     const user = await User.findByIdAndDelete(request.user._id);
 
     // Check if the user was deleted successfully
@@ -171,5 +171,43 @@ router.delete("/delete-me", authenticate, async (request, response) => {
   }
 });
 
+// DELETE route for admin to delete any user and associated bookings
+router.delete("/delete/:userId", authenticate, async (request, response) => {
+  if (!request.user.admin) {
+    return response.status(403).json({ message: "Unauthorized" });
+  }
+
+  const userToDelete = await User.findById(request.params.userId);
+  if (!userToDelete) {
+    return response.status(404).json({ message: "User not found" });
+  }
+
+  // Find all the bookings associated with the user
+  const bookings = await Booking.find({ user: request.params.userId });
+
+  // Iterate through the bookings and update the equipment and delete the bookings
+  for (const booking of bookings) {
+    const equipmentId = booking.equipment;
+    const equipment = await Equipment.findById(equipmentId);
+
+    if (equipment) {
+      // Remove the bookedDates associated with the booking from the equipment
+      equipment.bookedDates = equipment.bookedDates.filter((bookedDate) => {
+        return !(
+          bookedDate.startDate.getTime() ===
+            new Date(booking.startDate).getTime() &&
+          bookedDate.endDate.getTime() === new Date(booking.endDate).getTime()
+        );
+      });
+      // save the changes to the equipment
+      await equipment.save(); 
+    }
+    // delete the booking
+    await booking.deleteOne(); 
+  }
+  // delete the user
+  await User.findByIdAndDelete(request.params.userId);
+  response.json({ message: "User deleted successfully" });
+});
 
 module.exports = router;
