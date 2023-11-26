@@ -6,6 +6,7 @@ const { generateJwt, authenticate } = require('../functions');
 
 
 // GET all users route for admin only
+// localhost:3000/users/all
 router.get('/all', authenticate, async (request, response) => {
   if (!request.user.admin) {
     return response.status(403).json({ message: 'Unauthorised' });
