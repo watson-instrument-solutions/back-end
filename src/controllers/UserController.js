@@ -22,13 +22,19 @@ router.get('/all', authenticate, async (request, response) => {
     });
 });
 
-// GET one user by id
-router.get('/one/id/:id', async (request, response) => {
-    let result = null;
-
-    response.json({
-        user: result
-    });
+// GET current user for dashboard
+// localhost:3000/users/me
+router.get('/me', authenticate, async (request, response) => {
+  try {
+    const user = await User.findOne({ _id: request.user._id });
+    if (!user) {
+      return response.status(404).json({ message: "No user found" });
+    }
+    response.json(user);
+  } catch (error) {
+    console.error(error);
+    response.status(500).json({ message:'An erro occured while fetching user data' });
+  }
 });
 
 // GET one user by name
