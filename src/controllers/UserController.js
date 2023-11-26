@@ -8,7 +8,7 @@ const { Equipment } = require('../models/EquipmentModel')
 
 
 
-// GET all users route for admin only
+// GET route to return all users route for admin only
 // localhost:3000/users/all
 router.get('/all', authenticate, async (request, response) => {
   if (!request.user.admin) {
@@ -26,7 +26,7 @@ router.get('/all', authenticate, async (request, response) => {
 });
 
 
-// GET current user for user dashboard
+// GET route for current user for user dashboard
 // localhost:3000/users/me
 router.get('/me', authenticate, async (request, response) => {
   try {
@@ -42,7 +42,7 @@ router.get('/me', authenticate, async (request, response) => {
 });
 
 
-//  POST to CREATE a user
+//  POST to route CREATE a user
 // localhost3000:users/register-account
 router.post('/register-account', async (request, response) => 
 {
@@ -88,7 +88,7 @@ router.post('/register-account', async (request, response) =>
   });
 
 
-//  POST to LOG IN
+//  POST route to LOG IN
 // localhost3000:users/login
   router.post("/login", async (request, response) => {
     const user = await User.findOne({ email: request.body.email });
@@ -110,16 +110,30 @@ router.post('/register-account', async (request, response) =>
   });
 
 
-//  UPDATE an existing user
-router.patch('/;id', async (request, response) => {
-    let result = null;
+//  PATCH route to UPDATE the current user
+// localhost:3000/update-me
+router.patch('/update-me', authenticate, async (request, response) => {
+  try {
+    const update = { ...request.body };
 
-    response.json({
-        user: result
-    });
+    let user = await User.findByIdAndUpdate(request.user._id, update, {
+      new: true,
+    })
+
+    if (!user) {
+      return response.status(404).json({ message: "User not found" });
+    }
+
+    response.json(user);
+  } catch (error) {
+    console.error(error);
+    return response
+      .status(500)
+      .json({ message: "An error occurred while updating" });
+  }
 });
 
-// DELETE route for current user
+// DELETE route for current user to delete own account and any associated bookings
 // localhost:3000/users/delete-me
 router.delete("/delete-me", authenticate, async (request, response) => {
   try {
@@ -172,6 +186,7 @@ router.delete("/delete-me", authenticate, async (request, response) => {
 });
 
 // DELETE route for admin to delete any user and associated bookings
+// localhost:3000/delete/userId
 router.delete("/delete/:userId", authenticate, async (request, response) => {
   if (!request.user.admin) {
     return response.status(403).json({ message: "Unauthorized" });
