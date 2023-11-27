@@ -13,6 +13,11 @@ const EquipmentSchema = new Schema({
         unique: false,
         required: false
     },
+    images: {
+        type: String,
+        unique: false,
+        required: false
+    },
     pricePerDay: {
         type: Number,
         unique: false,

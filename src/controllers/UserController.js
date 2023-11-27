@@ -1,11 +1,12 @@
 const express = require('express');
-const { User } = require('../models/UserModel');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const { generateJwt, authenticate } = require('../functions');
+
+const { User } = require('../models/UserModel');
 const { Booking } = require('../models/BookingModel');
 const { Equipment } = require('../models/EquipmentModel')
 
+const { generateJwt, authenticate } = require('../functions');
 
 
 // GET route to return all users route for admin only

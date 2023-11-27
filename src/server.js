@@ -18,6 +18,9 @@ app.use(express.urlencoded({extended: true}));
 const UserRouter = require('./controllers/UserController');
 app.use('/users', UserRouter)
 
+const EquipmentRouter = require('./controllers/EquipmentController');
+app.use('/equipment', EquipmentRouter)
+
 // some comment here to trigger nodemon into restarting
 
 // GET localhost:3000/ 
