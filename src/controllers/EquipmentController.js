@@ -35,8 +35,18 @@ router.post('/add-new', authenticate, async (request, response) => {
         return response.status(400)
           .json({ message: "An item of equipment with this name already exists" });
       }
-      const { itemName } = request.body;
-      const newEquipment = new Equipment({ itemName });
+      
+      const newEquipment = new Equipment({ 
+        itemName: request.body.itemName,
+        description: request.body.description,
+        images: request.body.images,
+        pricePerDay: request.body.pricePerDay,
+        pricePerWeek: request.body.pricePerWeek,
+        pricePerMonth: request.body.pricePerMonth,
+        supplyCost: request.body.supplyCost,
+        stock: request.body.stock,
+        bookedDates: request.body.bookedDates
+      });
     
       try {
         const savedEquipment = await newEquipment.save();
