@@ -23,7 +23,7 @@ async function authenticate(request, response, next) {
 	try {
 	  const token = request.header('Authorization').replace("Bearer ", "");
 	//   jwt troubleshooting
-	  console.log('Verifying Token:', token);
+	//   console.log('Verifying Token:', token);
 	  if (!token) throw new Error();
   
 	  const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });;
