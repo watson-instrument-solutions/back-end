@@ -21,17 +21,17 @@ const EquipmentSchema = new Schema({
     pricePerDay: {
         type: Number,
         unique: false,
-        required: false
+        required: true
     },
     pricePerWeek: {
         type: Number,
         unique: false,
-        required: false
+        required: true
     },
     pricePerMonth: {
         type: Number,
         unique: false,
-        required: false
+        required: true
     },
     supplyCost: {
         type: Number,
