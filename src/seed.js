@@ -7,22 +7,27 @@ databaseConnect().then(async () => {
 
 
     const Equipment = mongoose.model('Equipment', {
-        "item name": String, 
+        "itemName": String, 
         "description": String,
-        "price per day": Number, 
-        "price per week": Number, 
-        "price per month": Number, 
-        "supply cost": Number
+        "images": String,
+        "pricePerDay": Number, 
+        "pricePerWeek": Number, 
+        "pricePerMonth": Number, 
+        "supplyCost": Number,
+        "stock": Number,
+        "bookedDates": []
 
     })
 
     let newEquipment = new Equipment({
-        "item name": "NOR139",
+        "itemName": "NOR139",
         "description": "Environmental logger - type 1, 1/3 octave, audio, solar powered logging kit",
-        "price per day": 110,
-        "price per week": 400,
-        "price per month": 1200,
-        "supply cost": 0
+        "pricePerDay": 110,
+        "pricePerWeek": 400,
+        "pricePerMonth": 1200,
+        "supplyCost": 0,
+        "stock": 4,
+        "bookedDates": []
     });
 
     await newEquipment.save().then(() => {

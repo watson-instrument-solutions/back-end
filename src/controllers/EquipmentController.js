@@ -57,4 +57,39 @@ router.post('/add-new', authenticate, async (request, response) => {
       };
 });
 
+
+// PATCH route to update equipment details, ADMIN only
+// localhost:3000/equipment/update
+router.patch('/update/:id', authenticate, async (request, response) => {
+  // check if user is admin
+  if (!request.user.admin) {
+    return response.status(403).json({ message: "Unauthorized" });
+  }
+
+  try {
+    const updatedEquipment = await Equipment.findByIdAndUpdate(
+      request.params.id,
+      {itemName: request.body.itemName,
+        description: request.body.description,
+        images: request.body.images,
+        pricePerDay: request.body.pricePerDay,
+        pricePerWeek: request.body.pricePerWeek,
+        pricePerMonth: request.body.pricePerMonth,
+        supplyCost: request.body.supplyCost,
+        stock: request.body.stock,
+        bookedDates: request.body.bookedDates},
+      { new: true }
+    );
+
+    if (!updatedEquipment) {
+      return response.status(404).json({ message: "Equipment not found" });
+    }
+
+    response.json(updatedEquipment);
+  } catch (error) {
+    console.error(error);
+    response.status(500)
+      .json({ message: "An error occurred while trying to update the equipment" });
+  }
+})
 module.exports = router;
