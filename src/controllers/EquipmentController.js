@@ -59,7 +59,7 @@ router.post('/add-new', authenticate, async (request, response) => {
 
 
 // PATCH route to update equipment details, ADMIN only
-// localhost:3000/equipment/update
+// localhost:3000/equipment/update/id
 router.patch('/update/:id', authenticate, async (request, response) => {
   // check if user is admin
   if (!request.user.admin) {
@@ -91,5 +91,35 @@ router.patch('/update/:id', authenticate, async (request, response) => {
     response.status(500)
       .json({ message: "An error occurred while trying to update the equipment" });
   }
-})
+});
+
+
+// DELETE route to remove equipment, ADMIN only
+// localhost:3000/equipment/delete/id
+router.delete('/delete/:id', authenticate, async (request, response) => {
+  // check if user is admin
+  if (!request.user.admin) {
+    return response.status(403).json({ message: "Unauthorized" });
+  }
+
+  try {
+    const equipmentToDelete = await Equipment.findById(request.params.id);
+
+    if (!equipmentToDelete) {
+      return response.status(404).json({ message: "Equipment not found"})
+    }
+  
+    // delete any associated bookings
+    await Booking.deleteMany( {equipment: request.params.id} );
+
+    // delete the equipment
+    await Equipment.findByIdAndDelete( request.params.id );
+
+    response.json({ message: 'Equipment and all associated bookings have been deleted successfully'});
+
+  } catch(error) {
+    console.error(error);
+    response.status(500).json({message: 'An error ocurred whilst trying to delete equipment'});
+  }
+});
 module.exports = router;
