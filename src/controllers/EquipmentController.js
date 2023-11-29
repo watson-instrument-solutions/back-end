@@ -122,4 +122,5 @@ router.delete('/delete/:id', authenticate, async (request, response) => {
     response.status(500).json({message: 'An error ocurred whilst trying to delete equipment'});
   }
 });
+
 module.exports = router;

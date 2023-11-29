@@ -16,10 +16,13 @@ app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
 const UserRouter = require('./controllers/UserController');
-app.use('/users', UserRouter)
+app.use('/users', UserRouter);
 
 const EquipmentRouter = require('./controllers/EquipmentController');
-app.use('/equipment', EquipmentRouter)
+app.use('/equipment', EquipmentRouter);
+
+const BookingRouter = require('./controllers/BookingController');
+app.use('/booking', BookingRouter);
 
 // some comment here to trigger nodemon into restarting
 
