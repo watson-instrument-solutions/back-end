@@ -17,15 +17,27 @@ router.get('/all', authenticate, async (request, response) => {
         return response.status(403).json({ message: "Unauthorized" });
       }
 
-    
+    const bookings = await Booking.find({});
+    if (!bookings) {
+      return response.status(404).json({ message: 'No bookings found' });
+    }
+
+    response.json(bookings);
 });
 
 
 // GET route to view all bookings associated with current user
 // localhost:3000/booking/my-bookings
 router.get('/my-bookings', authenticate, async (request, response) => {
-    
+   
+  try {
+    const bookings = await Booking.find({ user: request.user._id });
+    response.json(bookings)
 
+  } catch(error) {
+    console.error('An error occurred while fetching your bookings', error)
+    response.status(500).json({ message: 'An error occured whilst fetching bookings'})
+  }
     
 });
 
