@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { User } = require('./models/UserModel');
+const { Equipment } = require('./models/EquipmentModel');
 
 require('dotenv').config();
 
@@ -18,6 +19,8 @@ function generateJwt(userId){
 	);
 	return token;
 }
+
+
 
 async function authenticate(request, response, next) {
 	try {
@@ -42,6 +45,9 @@ async function authenticate(request, response, next) {
 	  response.status(401).json({ message: 'Please login' });
 	}
   }
+
+
+  
 
 module.exports = {
     generateJwt, authenticate
