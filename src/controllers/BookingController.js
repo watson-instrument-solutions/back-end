@@ -15,6 +15,7 @@ async function calculateTotalPrice(equipmentID, startDate, endDate) {
   try {
     // Find the equipment by its ID to get the pricePerDay
     const equipment = await Equipment.findById(equipmentID);
+
     if (!equipment) {
       throw new Error("Equipment not found");
     }
@@ -23,7 +24,6 @@ async function calculateTotalPrice(equipmentID, startDate, endDate) {
     const start = new Date(startDate);
     const end = new Date(endDate);
 
-    
     // One day in ms
     const oneDay = 24 * 60 * 60 * 1000; 
     // One week in ms
@@ -35,8 +35,8 @@ async function calculateTotalPrice(equipmentID, startDate, endDate) {
     const weeks = Math.floor(Math.abs((end - start) / oneWeek));
     const months = Math.floor(Math.abs((end - start) / oneMonth));
 
+    // calculate total price based on relevant rate
     let totalPrice = 0;
-
     if (days < 7) {
       totalPrice = days * equipment.pricePerDay;
     } else if (days >= 7 && days < 29) {
@@ -46,6 +46,7 @@ async function calculateTotalPrice(equipmentID, startDate, endDate) {
     }
 
     return totalPrice;
+
   } catch (error) {
     throw new Error("Error calculating total price");
   }
@@ -99,12 +100,8 @@ async function createBooking(equipmentID, startDate, endDate, request) {
 	  if (!equipment) {
 		throw new Error("The specified equipment does not exist");
 	  }
-
-	// // Check if the required number of items is available
-	// const stockAvailable = await Equipment.exists({ stock: equipmentID })
-	// if 
   
-	  // Calculate the total price for the booking using the 'calculateTotalPrice' function.
+	  // Calculate the total price for the booking
 	  const totalPrice = await calculateTotalPrice(equipmentID, startDate, endDate);
   
 	  // Create a new 'Booking' object with the provided details.
@@ -135,6 +132,14 @@ async function createBooking(equipmentID, startDate, endDate, request) {
 	  if (!isAvailable) {
 		throw new Error("The equipment is not available for the selected dates");
 	  }
+
+	  // Update the equipment stock and bookedDates field with the new booking
+		const updatedStock = equipment.stock - 1; // Decrement stock by 1
+		if (updatedStock < 0) {
+    	throw new Error("Not enough stock available for the equipment");
+		}
+
+		equipment.stock = updatedStock;
   
 	  // Update the equipment bookedDates field with the new booking
 	  equipment.bookedDates.push({ startDate, endDate });
