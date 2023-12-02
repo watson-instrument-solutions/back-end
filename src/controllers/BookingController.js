@@ -197,7 +197,6 @@ router.post('/me/new', authenticate, async (request, response) => {
     response.status(400).json({ messgae: error.message });
   }
 
-    
 });
 
 
@@ -211,31 +210,93 @@ router.post('/admin/new', authenticate, async (request, response) => {
 
 // PATCH route for admin to update any booking
 // localhost:3000/booking/admin/update
-router.patch('/admin/update', authenticate, async (request, response) => {
+router.patch('/admin/update/:id', authenticate, async (request, response) => {
     // check if user is admin
     if (!request.user.admin) {
         return response.status(403).json({ message: "Unauthorized" });
       }
 
+	  try {
+		const updatedBooking = await Booking.findByIdAndUpdate(
+		  request.params.id,
+		  {
+			user: request.body.user,
+			equipment: request.body.equipment,
+			startDate: request.body.startDate,
+			endDate: request.body.endDate,
+			totalPrice: request.body.totalPrice,
+		  },
+		  { new: true }
+		);
+	
+		if (!updatedBooking) {
+		  return response.status(404).json({ message: "Booking not found" });
+		}
+
+		// code to recalculate total price gos here. Get calprice function to accept multiple params?
+	
+		response.json(updatedBooking);
+	  } catch (error) {
+		console.error(error);
+		response.status(500).json({ message: "An error occurred while trying to update the booking" });
+	  }
     
 });
 
 
 // DELETE route for admin to delete any booking
-// localhost:3000/booking/admin/update
-router.patch('/admin/delete', authenticate, async (request, response) => {
+// localhost:3000/booking/admin/delete/id
+router.delete('/admin/delete/:id', authenticate, async (request, response) => {
     // check if user is admin
     if (!request.user.admin) {
         return response.status(403).json({ message: "Unauthorized" });
       }
+	  try {
+		const bookingToDelete = await Booking.findById(request.params.id);
+	
+		if (!bookingToDelete) {
+		  return response.status(404).json({ message: "Booking not found"})
+		}
 
+		equipmentID = bookingToDelete.equipment;
+		equipment = await Equipment.findById(equipmentID)
+	  
+		// Update the equipment stock field 
+		const updatedStock = equipment.stock + 1 // Increment stock by 1
+		if (updatedStock === equipment.stock) {
+    	throw new Error("error recalculating equipment stock");
+		}
+
+		equipment.stock = updatedStock;
+		await equipment.save();
+
+		// Remove the bookedDates associated with the booking from the equipment
+		equipment.bookedDates = equipment.bookedDates.filter((bookedDate) => {
+			return !(
+			  bookedDate.startDate.getTime() === new Date(bookingToDelete.startDate).getTime() &&
+			  bookedDate.endDate.getTime() === new Date(bookingToDelete.endDate).getTime()
+			);
+		  });
+
+		
+		await equipment.save();
+	
+		// delete the booking
+		await Booking.findByIdAndDelete( request.params.id );
+	
+		response.json({ message: 'Booking has been deleted successfully'});
+	
+	  } catch(error) {
+		console.error(error);
+		response.status(500).json({message: 'An error ocurred whilst trying to delete booking'});
+	  }
     
 });
 
 
 // DELETE route for current user to delete their booking
 // localhost:3000/booking/admin/update
-router.patch('/me/delete', authenticate, async (request, response) => {
+router.delete('/me/delete', authenticate, async (request, response) => {
     
 
     

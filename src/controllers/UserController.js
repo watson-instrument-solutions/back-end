@@ -118,7 +118,7 @@ router.patch('/update-me', authenticate, async (request, response) => {
     const update = { ...request.body };
 
     let user = await User.findByIdAndUpdate(request.user._id, update, {
-      new: true,
+      new: true
     })
 
     if (!user) {
