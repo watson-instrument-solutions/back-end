@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs');
 const mongoose = require("mongoose");
 
 const { User } = require('../models/UserModel');
@@ -11,32 +10,43 @@ const { authenticate } = require('../functions');
 
 
 // Total price calculation used in createBooking()
-async function calculateTotalPrice(equipmentID, startDate, endDate) {
+async function calculateTotalPrice(...args) {
   try {
-    // Find the equipment by its ID to get the pricePerDay
-    const equipment = await Equipment.findById(equipmentID);
+	let equipment, start, end;
+
+    // Check if the first argument is an object (booking)
+    if (args[0] && typeof args[0] === 'object') {
+      // Extract values from the booking object
+      const { equipment: equipmentID, startDate, endDate } = args[0];
+      equipment = await Equipment.findById(equipmentID);
+      start = new Date(startDate);
+      end = new Date(endDate);
+    } else {
+      // Extract values from individual arguments
+      const [equipmentID, startDate, endDate] = args;
+      equipment = await Equipment.findById(equipmentID);
+      start = new Date(startDate);
+      end = new Date(endDate);
+    }
 
     if (!equipment) {
       throw new Error("Equipment not found");
     }
-
-    // Convert startDate and endDate to Date objects
-    const start = new Date(startDate);
-    const end = new Date(endDate);
 
     // One day in ms
     const oneDay = 24 * 60 * 60 * 1000; 
     // One week in ms
     const oneWeek = oneDay * 7;
     // One month in ms
+	// if customer books for the month of feb in a non leap year, code to switch to month rate?
     const oneMonth = oneDay * 29;
-    // Calculate the number of days between startDate and endDate
+    // Calculate the number of days/weeks/months between startDate and endDate
     const days = Math.floor(Math.abs((end - start) / oneDay));
     const weeks = Math.floor(Math.abs((end - start) / oneWeek));
     const months = Math.floor(Math.abs((end - start) / oneMonth));
 
     // calculate total price based on relevant rate
-    let totalPrice = 0;
+    let totalPrice = 0 + equipment.supplyCost;
     if (days < 7) {
       totalPrice = days * equipment.pricePerDay;
     } else if (days >= 7 && days < 29) {
@@ -45,6 +55,14 @@ async function calculateTotalPrice(equipmentID, startDate, endDate) {
       totalPrice = months * equipment.pricePerMonth;
     }
 
+	// If a booking object is provided, update its total price
+    if (args[0] && typeof args[0] === 'object') {
+		const booking = args[0];
+		booking.totalPrice = totalPrice;
+  
+		// Save the updated booking to the database 
+		await booking.save();
+	}
     return totalPrice;
 
   } catch (error) {
@@ -200,14 +218,6 @@ router.post('/me/new', authenticate, async (request, response) => {
 });
 
 
-// POST route for admin to create a new booking for any user
-// localhost:3000/booking/admin/new
-router.post('/admin/new', authenticate, async (request, response) => {
-    
-
-});
-
-
 // PATCH route for admin to update any booking
 // localhost:3000/booking/admin/update
 router.patch('/admin/update/:id', authenticate, async (request, response) => {
@@ -217,23 +227,36 @@ router.patch('/admin/update/:id', authenticate, async (request, response) => {
       }
 
 	  try {
-		const updatedBooking = await Booking.findByIdAndUpdate(
-		  request.params.id,
-		  {
+
+		const existingBooking = await Booking.findById(request.params.id);
+
+    	if (!existingBooking) {
+      		return response.status(404).json({ message: "Booking not found" });
+    	}
+
+		// Create a separate variable with the updated dates
+		const updatedBookingData = {
 			user: request.body.user,
 			equipment: request.body.equipment,
 			startDate: request.body.startDate,
 			endDate: request.body.endDate,
-			totalPrice: request.body.totalPrice,
-		  },
-		  { new: true }
-		);
-	
-		if (!updatedBooking) {
-		  return response.status(404).json({ message: "Booking not found" });
-		}
-
-		// code to recalculate total price gos here. Get calprice function to accept multiple params?
+			totalPrice: existingBooking.totalPrice, // Use the existing total price initially
+		  };
+	  
+		  // Create a new booking with the updated data
+		  const updatedBooking = await Booking.findByIdAndUpdate(
+			request.params.id,
+			updatedBookingData,
+			{ new: true }
+		  );
+	  
+		  // Recalculate total price if start or end date has changed
+		  if (
+			request.body.startDate !== existingBooking.startDate ||
+			request.body.endDate !== existingBooking.endDate
+		  ) {
+			await calculateTotalPrice(updatedBooking);
+		  }
 	
 		response.json(updatedBooking);
 	  } catch (error) {
@@ -294,13 +317,6 @@ router.delete('/admin/delete/:id', authenticate, async (request, response) => {
 });
 
 
-// DELETE route for current user to delete their booking
-// localhost:3000/booking/admin/update
-router.delete('/me/delete', authenticate, async (request, response) => {
-    
-
-    
-});
 
 
 module.exports = router;
