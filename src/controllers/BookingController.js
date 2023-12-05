@@ -140,11 +140,17 @@ async function createBooking(equipmentID, startDate, endDate, request) {
 		// Convert the new booking start and end dates to Date objects.
 		const newStart = new Date(startDate);
 		const newEnd = new Date(endDate);
-  
+		
+		// Check if stock level is available
+		const isStock = equipment.stock;
+		if (!isStock) {
+			console.log('No stock available for this booking period');
+		};
+
 		// Return true if the new booking's start date is after the booked end date
 		// OR if the new booking's end date is before the booked start date,
-		// indicating that there is no overlap between the existing booking and the new booking.
-		return newStart > bookedEnd || newEnd < bookedStart;
+		// AND the stock level is greater than 1
+		return newStart > bookedEnd || newEnd < bookedStart && isStock >= 1;
 	  });
   
 	  if (!isAvailable) {
@@ -198,7 +204,7 @@ router.get('/my-bookings', authenticate, async (request, response) => {
 
   } catch(error) {
     console.error('An error occurred while fetching your bookings', error)
-    response.status(500).json({ message: 'An error occured whilst fetching bookings'})
+    response.status(500).json({ message: 'An error occurred whilst fetching bookings'})
   }
     
 });
