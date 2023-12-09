@@ -1,8 +1,9 @@
 // import the server package 
 const express = require('express');
-
-// make an instance of the server that we can customize and run 
 const app = express();
+
+require('dotenv').config();
+
 
 const HOST = process.env.HOST || 'localhost';
 const PORT = process.env.PORT || 3000;
@@ -24,6 +25,13 @@ app.use('/equipment', EquipmentRouter);
 const BookingRouter = require('./controllers/BookingController');
 app.use('/booking', BookingRouter);
 
+
+// test message to see the api is running
+app.get("/", (request, response) => {
+
+	response.send("Hello world, this server is hello!");
+
+});
 
 module.exports = {
 	app,
