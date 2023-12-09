@@ -28,11 +28,11 @@ app.use('/booking', BookingRouter);
 
 // GET localhost:3000/ 
 // app.get(route path, callback function)
-// app.get("/", (request, response) => {
+app.get("/", (request, response) => {
 
 	response.send("Hello world, this server is hello!");
 
-// });
+});
 
 module.exports = {
 	app,
