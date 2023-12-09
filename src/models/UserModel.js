@@ -18,13 +18,13 @@ const UserSchema = new Schema({
     },
     businessName: {
         type: String,
-        required: true,
+        required: false,
         unique: false,
         trim: true
     },
     telephone: {
         type: Number,
-        required: true,
+        required: false,
         unique: false
     },
     email: {
@@ -42,7 +42,7 @@ const UserSchema = new Schema({
     },
     address: {
         type: String,
-        required: true,
+        required: false,
         unique: false,
         trim: true
     },

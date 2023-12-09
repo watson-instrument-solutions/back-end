@@ -30,7 +30,7 @@ app.use('/booking', BookingRouter);
 // app.get(route path, callback function)
 // app.get("/", (request, response) => {
 
-// 	response.send("Hello world, this server is bananas!");
+	response.send("Hello world, this server is hello!");
 
 // });
 
