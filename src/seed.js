@@ -1,31 +1,20 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 const { databaseConnect } = require('./database');
+
+// Number of rounds to perform for bcrypt hashing
+const saltRounds = 10;
+
+
+async function hashPassword(password) {
+    return await bcrypt.hash(password, saltRounds);
+  }
 
 databaseConnect().then(async () => {
     console.log('Seeding DB');
 
-    const Equipment = mongoose.model('Equipment', {
-        "itemName": String, 
-        "description": String,
-        "images": String,
-        "pricePerDay": Number, 
-        "pricePerWeek": Number, 
-        "pricePerMonth": Number, 
-        "supplyCost": Number,
-        "stock": Number,
-        "bookedDates": []
-    });
-
-    const User = mongoose.model('User', {
-        "firstName": String,
-        "lastName": String,
-        "businessName": String,
-        "telephone": Number,
-        "email": String,
-        "password": String,
-        "address": String,
-        "admin": Boolean
-    })
+    const { User } = require('./models/UserModel');
+    const { Equipment } = require('./models/EquipmentModel');
 
     // Equipment items
 
@@ -138,7 +127,7 @@ databaseConnect().then(async () => {
         "businessName": "RWAcoustics",
         "telephone": 12345678910,
         "email": "richard@rwacoustics.com",
-        "password": "b1grich123",
+        "password": await hashPassword("b1grich123"),
         "address": "4 White Lane, Brisbane, QLD, 4021",
         "admin": false
     });
@@ -153,7 +142,7 @@ databaseConnect().then(async () => {
         "businessName": "OzAcoustic Inc.",
         "telephone": 987654321,
         "email": "annika@ozacoustics.com",
-        "password": "password123",
+        "password": await hashPassword("password123"),
         "address": "432 / 1 Martin Place, Sydney, NSW, 2000 ",
         "admin": false
     });
@@ -168,7 +157,7 @@ databaseConnect().then(async () => {
         "businessName": "Cazzacoutica",
         "telephone": 95762839,
         "email": "carol@cazzacoustica.com",
-        "password": "bosslady3000",
+        "password": await hashPassword("bosslady3000"),
         "address": "33 Main St, Perth, WA, 3098",
         "admin": false
     });
@@ -183,7 +172,7 @@ databaseConnect().then(async () => {
         "businessName": "WIS",
         "telephone": 43219876,
         "email": "kate@wis.com",
-        "password": "iamkate2023",
+        "password": await hashPassword("iamkate2023"),
         "address": "59 Hello Ave, Brisbane, QLD 4987",
         "admin": true
     });
