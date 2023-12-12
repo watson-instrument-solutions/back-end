@@ -21,7 +21,7 @@ databaseConnect().then(async () => {
     let nOR139 = new Equipment({
         "itemName": "NOR139",
         "description": "Environmental logger - type 1, 1/3 octave, audio, solar powered logging kit",
-        "images": "",
+        "images": "https://wis-images.s3.ap-southeast-2.amazonaws.com/nor139.jpg",
         "pricePerDay": 110,
         "pricePerWeek": 400,
         "pricePerMonth": 1200,
@@ -37,7 +37,7 @@ databaseConnect().then(async () => {
     let bSWA309 = new Equipment({
         "itemName": "BSWA309", 
         "description": "Environmental logger - type 2, solar powered logging kit",
-        "images": "",
+        "images": "https://wis-images.s3.ap-southeast-2.amazonaws.com/bswa309.jpg",
         "pricePerDay": 55, 
         "pricePerWeek": 250, 
         "pricePerMonth": 750, 
@@ -54,7 +54,7 @@ databaseConnect().then(async () => {
     let fieldCalibrator = new Equipment({
         "itemName": "Field Calibrator", 
         "description": "ARL RD9 type 1, B&K 4230 type 2",
-        "images": "",
+        "images": "https://wis-images.s3.ap-southeast-2.amazonaws.com/B%26K+4230+WW836+1.jpg",
         "pricePerDay": 30, 
         "pricePerWeek": 130, 
         "pricePerMonth": 390, 
@@ -71,7 +71,7 @@ databaseConnect().then(async () => {
     let altoTS315 = new Equipment({
         "itemName": "Alto TS315", 
         "description": "15in 2000W PA Loudspeaker",
-        "images": "",
+        "images": "https://wis-images.s3.ap-southeast-2.amazonaws.com/L00737000000000-00-1600x1600.jpg",
         "pricePerDay": 60, 
         "pricePerWeek": 200, 
         "pricePerMonth": 500, 
@@ -88,7 +88,7 @@ databaseConnect().then(async () => {
     let davis = new Equipment({
         "itemName": "Davis Vantage Vue", 
         "description": "Portable Weather Station",
-        "images": "",
+        "images": "https://wis-images.s3.ap-southeast-2.amazonaws.com/Davis_vue-1.jpg",
         "pricePerDay": 60, 
         "pricePerWeek": 200, 
         "pricePerMonth": 500, 
