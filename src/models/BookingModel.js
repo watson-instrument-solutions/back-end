@@ -6,7 +6,7 @@ const BookingSchema = new Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        unique: true,
+        unique: false,
         required: true
     },
     equipment: {
@@ -24,6 +24,11 @@ const BookingSchema = new Schema({
         type: Date,
         unique: false,
         required: true
+    },
+    bookingName: {
+        type: String,
+        unique: false,
+        required: false
     },
     totalPrice: {
         type: Number,
