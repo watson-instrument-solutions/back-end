@@ -272,6 +272,41 @@ router.patch('/admin/update/:id', authenticate, async (request, response) => {
     
 });
 
+// DELETE route for user to delete their own booking
+// localhost:3000/booking/delete/id
+router.delete("/delete/:id", authenticate, async (request, response) => {
+	const booking = await Booking.findOne({
+	  _id: request.params.id,
+	  user: request.user._id,
+	});
+	if (!booking) {
+	  return response
+		.status(404)
+		.json({ message: `Booking ${request.params.id} not found` });
+	}
+  
+	const equipmentId = booking.equipment;
+	const equipment = await Equipment.findById(equipmentId);
+  
+	if (!equipment) {
+	  return response.status(404).json({ error: "Equipment not found" });
+	}
+  
+	// Remove the bookedDates associated with the booking from the equipment
+	equipment.bookedDates = equipment.bookedDates.filter((bookedDate) => {
+	  return !(
+		bookedDate.startDate.getTime() ===
+		  new Date(booking.startDate).getTime() &&
+		bookedDate.endDate.getTime() === new Date(booking.endDate).getTime()
+	  );
+	});
+  
+	await equipment.save(); // save the changes to the equipment
+  
+	await booking.deleteOne();
+	response.json({ message: `Booking ${request.params.id} deleted successfully` });
+  });
+
 
 // DELETE route for admin to delete any booking
 // localhost:3000/booking/admin/delete/id
