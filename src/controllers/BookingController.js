@@ -302,7 +302,7 @@ router.delete("/delete/:id", authenticate, async (request, response) => {
 	});
 
 	// update the stock value to the equipment
-	equipment.stock + 1;
+	equipment.stock += 1;
   
 	await equipment.save(); // save the changes to the equipment
   
