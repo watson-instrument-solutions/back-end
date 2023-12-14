@@ -300,6 +300,9 @@ router.delete("/delete/:id", authenticate, async (request, response) => {
 		bookedDate.endDate.getTime() === new Date(booking.endDate).getTime()
 	  );
 	});
+
+	// update the stock value to the equipment
+	equipment.stock + 1;
   
 	await equipment.save(); // save the changes to the equipment
   
