@@ -35,6 +35,7 @@ async function authenticate(request, response, next) {
 	  if (!user) throw new Error();
   
 	  request.user = user;
+	//   console.log("Request object-middleware:", request);
 	  next();
 	} catch (error) {
 		// troubleshooting jwt issues
@@ -46,8 +47,6 @@ async function authenticate(request, response, next) {
 	}
   }
 
-
-  
 
 module.exports = {
     generateJwt, authenticate

@@ -10,79 +10,85 @@ const { authenticate } = require('../functions');
 
 
 // Total price calculation used in createBooking()
-async function calculateTotalPrice(...args) {
-  try {
-	let equipment, start, end;
-
-    // Check if the first argument is an object (booking)
-    if (args[0] && typeof args[0] === 'object') {
-      // Extract values from the booking object
-      const { equipment: equipmentID, startDate, endDate } = args[0];
-      equipment = await Equipment.findById(equipmentID);
-      start = new Date(startDate);
-      end = new Date(endDate);
-    } else {
-      // Extract values from individual arguments
-      const [equipmentID, startDate, endDate] = args;
-      equipment = await Equipment.findById(equipmentID);
-      start = new Date(startDate);
-      end = new Date(endDate);
-    }
-
-    if (!equipment) {
-      throw new Error("Equipment not found");
-    }
-
-    // One day in ms
-    const oneDay = 24 * 60 * 60 * 1000; 
-    // One week in ms
-    const oneWeek = oneDay * 7;
-    // One month in ms
-	// if customer books for the month of feb in a non leap year, code to switch to month rate?
-    const oneMonth = oneDay * 29;
-    // Calculate the number of days/weeks/months between startDate and endDate
-    const days = Math.floor(Math.abs((end - start) / oneDay));
-    const weeks = Math.floor(Math.abs((end - start) / oneWeek));
-    const months = Math.floor(Math.abs((end - start) / oneMonth));
-
-    // calculate total price based on relevant rate
-    let totalPrice = 0 + equipment.supplyCost;
-    if (days < 7) {
-      totalPrice = days * equipment.pricePerDay;
-    } else if (days >= 7 && days < 29) {
-      totalPrice = weeks * equipment.pricePerWeek;
-    } else {
-      totalPrice = months * equipment.pricePerMonth;
-    }
-
-	// If a booking object is provided, update its total price
-    if (args[0] && typeof args[0] === 'object') {
-		const booking = args[0];
-		booking.totalPrice = totalPrice;
-  
-		// Save the updated booking to the database 
-		await booking.save();
-	}
-    return totalPrice;
-
-  } catch (error) {
-    throw new Error("Error calculating total price");
-  }
-}
-
-
-// function to generate a booking
-async function createBooking([equipmentID], startDate, endDate, bookingName, request) {
+async function calculateTotalPrice(equipmentArray, startDate, endDate) {
 	try {
-	  // Check if equipmentID is valid
-	  console.log("Received equipmentID:", equipmentID);
-	  if (!mongoose.Types.ObjectId.isValid(equipmentID)) {
-		throw new Error("Invalid equipment ID");
+	  console.log("calculateTotalPrice - Start");
+  
+	  // Ensure startDate and endDate are valid Date objects
+	  const start = new Date(startDate);
+	  const end = new Date(endDate);
+  
+	  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+		throw new Error("Invalid startDate or endDate");
 	  }
   
-	  // Retrieve userID from the token
-	  const userID = request.user._id;
+	  // Calculate the number of days/weeks/months between startDate and endDate
+	  const days = Math.floor(Math.abs((end - start) / (24 * 60 * 60 * 1000)));
+	  const weeks = Math.floor(Math.abs((end - start) / (7 * 24 * 60 * 60 * 1000)));
+	  const months = Math.floor(Math.abs((end.getUTCFullYear() - start.getUTCFullYear()) * 12 + end.getUTCMonth() - start.getUTCMonth()));
   
+	  console.log("Days:", days);
+	  console.log("Weeks:", weeks);
+	  console.log("Months:", months);
+  
+	  // Calculate total price for each equipment object
+	  const totalPrices = equipmentArray.map((equipment) => {
+		if (!equipment) {
+		  console.error("Invalid equipment object:", equipment);
+		  return 0;
+		}
+  
+		let totalPrice = 0 + equipment.supplyCost;
+  
+		console.log(`Calculating price for equipment ${equipment._id}:`);
+		console.log(`Base Price: ${equipment.supplyCost}`);
+  
+		if (days < 7) {
+		  totalPrice = days * equipment.pricePerDay;
+		  console.log(`Price for ${days} days: ${totalPrice}`);
+		} else if (days >= 7 && days < 29) {
+		  totalPrice = weeks * equipment.pricePerWeek;
+		  console.log(`Price for ${weeks} weeks: ${totalPrice}`);
+		} else {
+		  totalPrice = months * equipment.pricePerMonth;
+		  console.log(`Price for ${months} months: ${totalPrice}`);
+		}
+  
+		return totalPrice;
+	  });
+  
+	  console.log("Individual Total Prices:", totalPrices);
+  
+	  // Sum up the total prices to get the overall total price
+	  const totalPrice = totalPrices.reduce((sum, price) => sum + price, 0);
+  
+	  console.log("Total Price:", totalPrice);
+  
+	  console.log("calculateTotalPrice - End");
+  
+	  return totalPrice;
+	} catch (error) {
+	  console.error("Error calculating total price:", error.message);
+	  throw new Error("Error calculating total price");
+	}
+  }
+
+// function to generate a booking
+async function createBooking(equipmentIDs, startDate, endDate, request) {
+	// console.log("Type of equipmentIDs:", typeof equipmentIDs);
+	try {
+		// Check if equipmentIDs are valid
+		for (const equipmentID of equipmentIDs) {
+		  console.log("Received equipmentID:", equipmentID);
+		  if (!mongoose.Types.ObjectId.isValid(equipmentID)) {
+			throw new Error("Invalid equipment ID");
+		  }
+		}
+	
+		// console.log("Request object:", request);
+	  	// Retrieve userID from the token
+	  const userID = request.user._id;
+	  
 	  // Convert startDate and endDate to Date objects
 	  const start = new Date(startDate);
 	  const end = new Date(endDate);
@@ -102,9 +108,11 @@ async function createBooking([equipmentID], startDate, endDate, bookingName, req
 	  }
   
 	  // Check if the equipment exists
-	  const equipmentExists = await Equipment.exists({ _id: equipmentID });
-	  if (!equipmentExists) {
-		throw new Error("The specified equipment does not exist");
+	  for (const equipmentID of equipmentIDs) {
+		const equipmentExists = await Equipment.exists({ _id: equipmentID });
+		if (!equipmentExists) {
+		  throw new Error("The specified equipment does not exist");
+		}
 	  }
   
 	  // Check if the user exists
@@ -114,22 +122,24 @@ async function createBooking([equipmentID], startDate, endDate, bookingName, req
 	  }
   
 	  // Check if the equipment is available for the given dates
-	  const equipment = await Equipment.findById(equipmentID);
-	  if (!equipment) {
-		throw new Error("The specified equipment does not exist");
-	  }
+	  for (const equipmentID of equipmentIDs) {
+		const equipment = await Equipment.findById(equipmentID);
+		if (!equipment) {
+		  throw new Error("The specified equipment does not exist");
+		}
+
+		const equipmentObjects = await Promise.all(equipmentIDs.map(id => Equipment.findById(id)));
   
 	  // Calculate the total price for the booking
-	  const totalPrice = await calculateTotalPrice(equipmentID, startDate, endDate);
+	  const totalPrice = await calculateTotalPrice(equipmentObjects, startDate, endDate);
   
 	  // Create a new 'Booking' object with the provided details.
 	  const booking = new Booking({
 		user: userID, // Set the user ID obtained from the token.
-		equipment: [ equipmentID ], // Set the equipment IDs for the booking.
+		equipment: Array.isArray(equipmentIDs) ? equipmentIDs : [equipmentIDs], // Set the equipment IDs for the booking.
 		startDate: startDate, // Set the start date of the booking.
 		endDate: endDate, // Set the end date of the booking.
 		totalPrice: totalPrice, // Set the total price for the booking.
-		bookingName: bookingName, 
 	});
   
 	  // Check if the equipment is available for the specified booking dates.
@@ -176,6 +186,7 @@ async function createBooking([equipmentID], startDate, endDate, bookingName, req
 		message: 'Booking created successfully',
 		booking: booking,
 	  };
+	}
 	} catch (error) {
 	  throw new Error("Error creating booking: " + error.message);
 	}
@@ -189,7 +200,7 @@ router.get('/all', authenticate, async (request, response) => {
     if (!request.user.admin) {
         return response.status(403).json({ message: "Unauthorized" });
       }
-
+	
     const bookings = await Booking.find({});
     if (!bookings) {
       return response.status(404).json({ message: 'No bookings found' });
@@ -218,9 +229,11 @@ router.get('/my-bookings', authenticate, async (request, response) => {
 // POST route to create a new booking for current user
 // localhost:3000/booking/me/new
 router.post('/me/new', authenticate, async (request, response) => {
-  const { equipmentID, startDate, endDate } = request.body;
+  const { equipmentIDs, startDate, endDate } = request.body;
+//   console.log("Request object-router:", request);
   try {
-    const newBooking = await createBooking(equipmentID, startDate, endDate, request);
+    const newBooking = await createBooking(equipmentIDs, startDate, endDate, request);
+	
     response.json(newBooking)
   } catch(error) {
     response.status(400).json({ message: error.message });
