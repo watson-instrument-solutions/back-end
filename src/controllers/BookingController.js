@@ -218,7 +218,7 @@ router.post('/me/new', authenticate, async (request, response) => {
     const newBooking = await createBooking(equipmentID, startDate, endDate, request);
     response.json(newBooking)
   } catch(error) {
-    response.status(400).json({ messgae: error.message });
+    response.status(400).json({ message: error.message });
   }
 
 });
