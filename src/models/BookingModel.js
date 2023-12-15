@@ -9,12 +9,13 @@ const BookingSchema = new Schema({
         unique: false,
         required: true
     },
-    equipment: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Equipment',
-        unique: false,
-        required: true
-    },
+    equipment: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Equipment',
+            required: true
+        }
+    ],
     startDate: {
         type: Date,
         unique: false,
@@ -25,11 +26,11 @@ const BookingSchema = new Schema({
         unique: false,
         required: true
     },
-    // bookingName: {
-    //     type: String,
-    //     unique: false,
-    //     required: false
-    // },
+    bookingName: {
+        type: String,
+        unique: false,
+        required: false
+    },
     totalPrice: {
         type: Number,
         unique: false,

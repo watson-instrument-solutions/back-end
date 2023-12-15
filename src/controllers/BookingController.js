@@ -72,7 +72,7 @@ async function calculateTotalPrice(...args) {
 
 
 // function to generate a booking
-async function createBooking(equipmentID, startDate, endDate, request) {
+async function createBooking([equipmentID], startDate, endDate, bookingName, request) {
 	try {
 	  // Check if equipmentID is valid
 	  console.log("Received equipmentID:", equipmentID);
@@ -125,11 +125,12 @@ async function createBooking(equipmentID, startDate, endDate, request) {
 	  // Create a new 'Booking' object with the provided details.
 	  const booking = new Booking({
 		user: userID, // Set the user ID obtained from the token.
-		equipment: equipmentID, // Set the equipment ID for the booking.
+		equipment: [ equipmentID ], // Set the equipment IDs for the booking.
 		startDate: startDate, // Set the start date of the booking.
 		endDate: endDate, // Set the end date of the booking.
 		totalPrice: totalPrice, // Set the total price for the booking.
-	  });
+		bookingName: bookingName, 
+	});
   
 	  // Check if the equipment is available for the specified booking dates.
 	  const isAvailable = equipment.bookedDates.every((booking) => {
@@ -145,12 +146,13 @@ async function createBooking(equipmentID, startDate, endDate, request) {
 		const isStock = equipment.stock;
 		if (!isStock) {
 			console.log('No stock available for this booking period');
+			throw new Error('No stock available for this booking period');
 		};
 
 		// Return true if the new booking's start date is after the booked end date
 		// OR if the new booking's end date is before the booked start date,
 		// AND the stock level is greater than 1
-		return newStart > bookedEnd || newEnd < bookedStart && isStock >= 1;
+		return newStart > bookedEnd || newEnd < bookedStart && isStock > 0;
 	  });
   
 	  if (!isAvailable) {
@@ -170,7 +172,10 @@ async function createBooking(equipmentID, startDate, endDate, request) {
 	  await equipment.save();
   
 	  await booking.save();
-	  return booking;
+	  return {
+		message: 'Booking created successfully',
+		booking: booking,
+	  };
 	} catch (error) {
 	  throw new Error("Error creating booking: " + error.message);
 	}
