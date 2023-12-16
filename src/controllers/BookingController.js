@@ -75,20 +75,17 @@ async function calculateTotalPrice(equipmentArray, startDate, endDate) {
 
 // function to generate a booking
 async function createBooking(equipmentIDs, startDate, endDate, request) {
-	// console.log("Type of equipmentIDs:", typeof equipmentIDs);
 	try {
-		// Check if equipmentIDs are valid
-		for (const equipmentID of equipmentIDs) {
-		  console.log("Received equipmentID:", equipmentID);
-		  if (!mongoose.Types.ObjectId.isValid(equipmentID)) {
-			throw new Error("Invalid equipment ID");
-		  }
+	  // Validate equipmentIDs
+	  for (const equipmentID of equipmentIDs) {
+		if (!mongoose.Types.ObjectId.isValid(equipmentID)) {
+		  throw new Error("Invalid equipment ID");
 		}
-	
-		// console.log("Request object:", request);
-	  	// Retrieve userID from the token
+	  }
+  
+	  // Retrieve user ID from the token
 	  const userID = request.user._id;
-	  
+  
 	  // Convert startDate and endDate to Date objects
 	  const start = new Date(startDate);
 	  const end = new Date(endDate);
@@ -98,21 +95,10 @@ async function createBooking(equipmentIDs, startDate, endDate, request) {
 		throw new Error("End date must be after the start date");
 	  }
   
-	  // Create a new Date object representing the current date and time.
-	  const currentDate = new Date();
-  
-	  // Check if either the 'start' or 'end' date is in the past compared to the current date.
-	  if (start < currentDate || end < currentDate) {
-		// If any of the booking dates are in the past, throw an error.
-		throw new Error("Booking dates after todays date");
-	  }
-  
-	  // Check if the equipment exists
-	  for (const equipmentID of equipmentIDs) {
-		const equipmentExists = await Equipment.exists({ _id: equipmentID });
-		if (!equipmentExists) {
-		  throw new Error("The specified equipment does not exist");
-		}
+	  // Check if equipment exists
+	  const equipmentObjects = await Equipment.find({ _id: { $in: equipmentIDs } });
+	  if (equipmentObjects.length !== equipmentIDs.length) {
+		throw new Error("One or more specified equipment do not exist");
 	  }
   
 	  // Check if the user exists
@@ -121,72 +107,39 @@ async function createBooking(equipmentIDs, startDate, endDate, request) {
 		throw new Error("The specified user does not exist");
 	  }
   
-	  // Check if the equipment is available for the given dates
-	  for (const equipmentID of equipmentIDs) {
-		const equipment = await Equipment.findById(equipmentID);
-		if (!equipment) {
-		  throw new Error("The specified equipment does not exist");
-		}
-
-		const equipmentObjects = await Promise.all(equipmentIDs.map(id => Equipment.findById(id)));
-  
-	  // Calculate the total price for the booking
+	  // Calculate total price for the booking
 	  const totalPrice = await calculateTotalPrice(equipmentObjects, startDate, endDate);
   
-	  // Create a new 'Booking' object with the provided details.
+	  // Create a new 'Booking' object
 	  const booking = new Booking({
-		user: userID, // Set the user ID obtained from the token.
-		equipment: Array.isArray(equipmentIDs) ? equipmentIDs : [equipmentIDs], // Set the equipment IDs for the booking.
-		startDate: startDate, // Set the start date of the booking.
-		endDate: endDate, // Set the end date of the booking.
-		totalPrice: totalPrice, // Set the total price for the booking.
-	});
-  
-	  // Check if the equipment is available for the specified booking dates.
-	  const isAvailable = equipment.bookedDates.every((booking) => {
-		// Convert each booked date from the equipments bookedDates array to Date objects.
-		const bookedStart = new Date(booking.startDate);
-		const bookedEnd = new Date(booking.endDate);
-  
-		// Convert the new booking start and end dates to Date objects.
-		const newStart = new Date(startDate);
-		const newEnd = new Date(endDate);
-		
-		// Check if stock level is available
-		const isStock = equipment.stock;
-		if (!isStock) {
-			console.log('No stock available for this booking period');
-			throw new Error('No stock available for this booking period');
-		};
-
-		// Return true if the new booking's start date is after the booked end date
-		// OR if the new booking's end date is before the booked start date,
-		// AND the stock level is greater than 1
-		return newStart > bookedEnd || newEnd < bookedStart && isStock > 0;
+		user: userID,
+		equipment: equipmentIDs,
+		startDate: startDate,
+		endDate: endDate,
+		totalPrice: totalPrice,
 	  });
   
-	  if (!isAvailable) {
-		throw new Error("The equipment is not available for the selected dates");
+	  // Log initial state of equipmentObjects
+	  console.log("Initial equipmentObjects:", equipmentObjects);
+  
+	  // Update stock and bookedDates for each equipment
+	  for (const equipment of equipmentObjects) {
+		// Update stock and bookedDates for each equipment
+		equipment.stock -= 1;
+		equipment.bookedDates.push({ startDate, endDate });
+		await equipment.save();
 	  }
-
-	  // Update the equipment stock and bookedDates field with the new booking
-		const updatedStock = equipment.stock - 1; // Decrement stock by 1
-		if (updatedStock < 0) {
-    	throw new Error("Not enough stock available for the equipment");
-		}
-
-		equipment.stock = updatedStock;
   
-	  // Update the equipment bookedDates field with the new booking
-	  equipment.bookedDates.push({ startDate, endDate });
-	  await equipment.save();
+	  // Log final state of equipmentObjects
+	  console.log("Final equipmentObjects:", equipmentObjects);
   
+	  // Save the booking
 	  await booking.save();
+  
 	  return {
-		message: 'Booking created successfully',
+		message: "Booking created successfully",
 		booking: booking,
 	  };
-	}
 	} catch (error) {
 	  throw new Error("Error creating booking: " + error.message);
 	}
