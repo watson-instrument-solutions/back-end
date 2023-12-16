@@ -110,7 +110,7 @@ databaseConnect().then(async () => {
         "pricePerWeek": 0, 
         "pricePerMonth": 0, 
         "supplyCost": 110,
-        "stock": Infinity,
+        "stock": 10,
         "bookedDates": []
     });
 
