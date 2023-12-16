@@ -169,16 +169,16 @@ async function createBooking(equipmentIDs, startDate, endDate, request) {
 		throw new Error("The equipment is not available for the selected dates");
 	  }
 
-	  // Update the equipment stock and bookedDates field with the new booking
-		const updatedStock = equipment.stock - 1; // Decrement stock by 1
-		if (updatedStock < 0) {
+	  // Update the remainingStock and bookedDates field with the new booking
+		const bookingStock = equipment.bookedDates.remainingStock - 1; // Decrement stock by 1
+		if (equipment.stock - equipment.bookedDates.remainingStock <= 0) {
     	throw new Error("Not enough stock available for the equipment");
 		}
 
-		equipment.stock = updatedStock;
+		equipment.stock.remainingStock = bookingStock;
   
 	  // Update the equipment bookedDates field with the new booking
-	  equipment.bookedDates.push({ startDate, endDate });
+	  equipment.bookedDates.push({ startDate, endDate, bookingStock });
 	  await equipment.save();
   
 	  await booking.save();

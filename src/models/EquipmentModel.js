@@ -50,6 +50,9 @@ const EquipmentSchema = new Schema({
             },
             endDate: {
                 type: Date
+            }, 
+            remainingStock: {
+                type: Number
             }
         },
     ]
