@@ -73,18 +73,6 @@ EquipmentSchema.methods.removeBookedDates = async function (startDate, endDate) 
     })
     await this.save() // save the changes after removing the dates
   }
-  
-//   // Validation for bookedDates
-//   EquipmentSchema.path('bookedDates').validate(function (bookedDates) {
-//     // Check if all bookedDates have valid startDate and endDate
-//     for (const booking of bookedDates) {
-//       if (!booking.startDate || !booking.endDate) {
-//         return false
-//       }
-//     }
-
-    
-//   };
 
   const Equipment = mongoose.model('Equipment', EquipmentSchema)
 
