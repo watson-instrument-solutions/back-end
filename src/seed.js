@@ -105,7 +105,7 @@ databaseConnect().then(async () => {
     let micMast = new Equipment({
         "itemName": "Microphone Mast", 
         "description": "Approx 1.2 - 1.4m, screws into logger case, made to order",
-        "images": "",
+        "images": "https://i.postimg.cc/YCVD7J8g/20161122-U4-PM.jpg",
         "pricePerDay": 0, 
         "pricePerWeek": 0, 
         "pricePerMonth": 0, 
