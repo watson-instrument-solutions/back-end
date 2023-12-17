@@ -97,9 +97,9 @@ async function createBooking(equipmentIDs, startDate, endDate, request) {
   
 	  // Check if equipment exists
 	  const equipmentObjects = await Equipment.find({ _id: { $in: equipmentIDs } });
-	  if (equipmentObjects.length !== equipmentIDs.length) {
-		throw new Error("One or more specified equipment do not exist");
-	  }
+	//   if (equipmentObjects.length !== equipmentIDs.length) {
+	// 	throw new Error("One or more specified equipment do not exist");
+	//   }
   
 	  // Check if the user exists
 	  const userExists = await User.exists({ _id: userID });
