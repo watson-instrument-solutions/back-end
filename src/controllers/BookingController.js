@@ -8,71 +8,6 @@ const { Equipment } = require('../models/EquipmentModel')
 
 const { authenticate } = require('../functions');
 
-
-// Total price calculation used in createBooking()
-// async function calculateTotalPrice(equipmentArray, startDate, endDate) {
-// 	try {
-// 	  console.log("calculateTotalPrice - Start");
-  
-// 	  // Ensure startDate and endDate are valid Date objects
-// 	  const start = new Date(startDate);
-// 	  const end = new Date(endDate);
-  
-// 	  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-// 		throw new Error("Invalid startDate or endDate");
-// 	  }
-  
-// 	  // Calculate the number of days/weeks/months between startDate and endDate
-// 	  const days = Math.floor(Math.abs((end - start) / (24 * 60 * 60 * 1000)));
-// 	  const weeks = Math.floor(Math.abs((end - start) / (7 * 24 * 60 * 60 * 1000)));
-// 	  const months = Math.floor(Math.abs((end.getUTCFullYear() - start.getUTCFullYear()) * 12 + end.getUTCMonth() - start.getUTCMonth()));
-  
-// 	  console.log("Days:", days);
-// 	  console.log("Weeks:", weeks);
-// 	  console.log("Months:", months);
-  
-// 	  // Calculate total price for each equipment object
-// 	  const totalPrices = equipmentArray.map((equipment) => {
-// 		if (!equipment) {
-// 		  console.error("Invalid equipment object:", equipment);
-// 		  return 0;
-// 		}
-  
-// 		let totalPrice = 0 + equipment.supplyCost;
-  
-// 		console.log(`Calculating price for equipment ${equipment._id}:`);
-// 		console.log(`Base Price: ${equipment.supplyCost}`);
-  
-// 		if (days < 7) {
-// 		  totalPrice = days * equipment.pricePerDay;
-// 		  console.log(`Price for ${days} days: ${totalPrice}`);
-// 		} else if (days >= 7 && days < 29) {
-// 		  totalPrice = weeks * equipment.pricePerWeek;
-// 		  console.log(`Price for ${weeks} weeks: ${totalPrice}`);
-// 		} else {
-// 		  totalPrice = months * equipment.pricePerMonth;
-// 		  console.log(`Price for ${months} months: ${totalPrice}`);
-// 		}
-  
-// 		return totalPrice;
-// 	  });
-  
-// 	  console.log("Individual Total Prices:", totalPrices);
-  
-// 	  // Sum up the total prices to get the overall total price
-// 	  const totalPrice = totalPrices.reduce((sum, price) => sum + price, 0);
-  
-// 	  console.log("Total Price:", totalPrice);
-  
-// 	  console.log("calculateTotalPrice - End");
-  
-// 	  return totalPrice;
-// 	} catch (error) {
-// 	  console.error("Error calculating total price:", error.message);
-// 	  throw new Error("Error calculating total price");
-// 	}
-//   }
-
 // function to generate a booking
 async function createBooking(equipmentIDs, startDate, endDate, totalPrice, request) {
 	try {
@@ -250,37 +185,44 @@ router.delete("/delete/:id", authenticate, async (request, response) => {
 	  _id: request.params.id,
 	  user: request.user._id,
 	});
+  
 	if (!booking) {
 	  return response
 		.status(404)
 		.json({ message: `Booking ${request.params.id} not found` });
 	}
   
-	const equipmentId = booking.equipment;
-	const equipment = await Equipment.findById(equipmentId);
+	const equipmentIds = booking.equipment;
+	const equipmentArray = await Equipment.find({ _id: { $in: equipmentIds } });
   
-	if (!equipment) {
+	if (equipmentArray.length === 0) {
 	  return response.status(404).json({ error: "Equipment not found" });
 	}
   
-	// Remove the bookedDates associated with the booking from the equipment
-	equipment.bookedDates = equipment.bookedDates.filter((bookedDate) => {
-	  return !(
-		bookedDate.startDate.getTime() ===
-		  new Date(booking.startDate).getTime() &&
-		bookedDate.endDate.getTime() === new Date(booking.endDate).getTime()
-	  );
-	});
-
-	// update the stock value to the equipment
-	equipment.stock += 1;
+	// Loop through each equipment object
+	for (const equipment of equipmentArray) {
+	  // Remove the bookedDates associated with the booking from the equipment
+	  equipment.bookedDates = equipment.bookedDates.filter((bookedDate) => {
+		return !(
+		  bookedDate.startDate.getTime() ===
+			new Date(booking.startDate).getTime() &&
+		  bookedDate.endDate.getTime() === new Date(booking.endDate).getTime()
+		);
+	  });
   
-	await equipment.save(); // save the changes to the equipment
+	  // Update the stock value for the equipment
+	  equipment.stock += 1;
   
+	  // Save the changes to the equipment
+	  await equipment.save();
+	}
+  
+	// Delete the booking
 	await booking.deleteOne();
-	response.json({ message: `Booking ${request.params.id} deleted successfully` });
+	response.json({
+	  message: `Booking ${request.params.id} deleted successfully`,
+	});
   });
-
 
 // DELETE route for admin to delete any booking
 // localhost:3000/booking/admin/delete/id
