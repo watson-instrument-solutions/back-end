@@ -10,71 +10,71 @@ const { authenticate } = require('../functions');
 
 
 // Total price calculation used in createBooking()
-async function calculateTotalPrice(equipmentArray, startDate, endDate) {
-	try {
-	  console.log("calculateTotalPrice - Start");
+// async function calculateTotalPrice(equipmentArray, startDate, endDate) {
+// 	try {
+// 	  console.log("calculateTotalPrice - Start");
   
-	  // Ensure startDate and endDate are valid Date objects
-	  const start = new Date(startDate);
-	  const end = new Date(endDate);
+// 	  // Ensure startDate and endDate are valid Date objects
+// 	  const start = new Date(startDate);
+// 	  const end = new Date(endDate);
   
-	  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-		throw new Error("Invalid startDate or endDate");
-	  }
+// 	  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+// 		throw new Error("Invalid startDate or endDate");
+// 	  }
   
-	  // Calculate the number of days/weeks/months between startDate and endDate
-	  const days = Math.floor(Math.abs((end - start) / (24 * 60 * 60 * 1000)));
-	  const weeks = Math.floor(Math.abs((end - start) / (7 * 24 * 60 * 60 * 1000)));
-	  const months = Math.floor(Math.abs((end.getUTCFullYear() - start.getUTCFullYear()) * 12 + end.getUTCMonth() - start.getUTCMonth()));
+// 	  // Calculate the number of days/weeks/months between startDate and endDate
+// 	  const days = Math.floor(Math.abs((end - start) / (24 * 60 * 60 * 1000)));
+// 	  const weeks = Math.floor(Math.abs((end - start) / (7 * 24 * 60 * 60 * 1000)));
+// 	  const months = Math.floor(Math.abs((end.getUTCFullYear() - start.getUTCFullYear()) * 12 + end.getUTCMonth() - start.getUTCMonth()));
   
-	  console.log("Days:", days);
-	  console.log("Weeks:", weeks);
-	  console.log("Months:", months);
+// 	  console.log("Days:", days);
+// 	  console.log("Weeks:", weeks);
+// 	  console.log("Months:", months);
   
-	  // Calculate total price for each equipment object
-	  const totalPrices = equipmentArray.map((equipment) => {
-		if (!equipment) {
-		  console.error("Invalid equipment object:", equipment);
-		  return 0;
-		}
+// 	  // Calculate total price for each equipment object
+// 	  const totalPrices = equipmentArray.map((equipment) => {
+// 		if (!equipment) {
+// 		  console.error("Invalid equipment object:", equipment);
+// 		  return 0;
+// 		}
   
-		let totalPrice = 0 + equipment.supplyCost;
+// 		let totalPrice = 0 + equipment.supplyCost;
   
-		console.log(`Calculating price for equipment ${equipment._id}:`);
-		console.log(`Base Price: ${equipment.supplyCost}`);
+// 		console.log(`Calculating price for equipment ${equipment._id}:`);
+// 		console.log(`Base Price: ${equipment.supplyCost}`);
   
-		if (days < 7) {
-		  totalPrice = days * equipment.pricePerDay;
-		  console.log(`Price for ${days} days: ${totalPrice}`);
-		} else if (days >= 7 && days < 29) {
-		  totalPrice = weeks * equipment.pricePerWeek;
-		  console.log(`Price for ${weeks} weeks: ${totalPrice}`);
-		} else {
-		  totalPrice = months * equipment.pricePerMonth;
-		  console.log(`Price for ${months} months: ${totalPrice}`);
-		}
+// 		if (days < 7) {
+// 		  totalPrice = days * equipment.pricePerDay;
+// 		  console.log(`Price for ${days} days: ${totalPrice}`);
+// 		} else if (days >= 7 && days < 29) {
+// 		  totalPrice = weeks * equipment.pricePerWeek;
+// 		  console.log(`Price for ${weeks} weeks: ${totalPrice}`);
+// 		} else {
+// 		  totalPrice = months * equipment.pricePerMonth;
+// 		  console.log(`Price for ${months} months: ${totalPrice}`);
+// 		}
   
-		return totalPrice;
-	  });
+// 		return totalPrice;
+// 	  });
   
-	  console.log("Individual Total Prices:", totalPrices);
+// 	  console.log("Individual Total Prices:", totalPrices);
   
-	  // Sum up the total prices to get the overall total price
-	  const totalPrice = totalPrices.reduce((sum, price) => sum + price, 0);
+// 	  // Sum up the total prices to get the overall total price
+// 	  const totalPrice = totalPrices.reduce((sum, price) => sum + price, 0);
   
-	  console.log("Total Price:", totalPrice);
+// 	  console.log("Total Price:", totalPrice);
   
-	  console.log("calculateTotalPrice - End");
+// 	  console.log("calculateTotalPrice - End");
   
-	  return totalPrice;
-	} catch (error) {
-	  console.error("Error calculating total price:", error.message);
-	  throw new Error("Error calculating total price");
-	}
-  }
+// 	  return totalPrice;
+// 	} catch (error) {
+// 	  console.error("Error calculating total price:", error.message);
+// 	  throw new Error("Error calculating total price");
+// 	}
+//   }
 
 // function to generate a booking
-async function createBooking(equipmentIDs, startDate, endDate, request) {
+async function createBooking(equipmentIDs, startDate, endDate, totalPrice, request) {
 	try {
 	  // Validate equipmentIDs
 	  for (const equipmentID of equipmentIDs) {
@@ -108,7 +108,7 @@ async function createBooking(equipmentIDs, startDate, endDate, request) {
 	  }
   
 	  // Calculate total price for the booking
-	  const totalPrice = await calculateTotalPrice(equipmentObjects, startDate, endDate);
+	//   const totalPrice = await calculateTotalPrice(equipmentObjects, startDate, endDate);
   
 	  // Create a new 'Booking' object
 	  const booking = new Booking({
@@ -182,10 +182,10 @@ router.get('/my-bookings', authenticate, async (request, response) => {
 // POST route to create a new booking for current user
 // localhost:3000/booking/me/new
 router.post('/me/new', authenticate, async (request, response) => {
-  const { equipmentIDs, startDate, endDate } = request.body;
+  const { equipmentIDs, startDate, endDate, totalPrice } = request.body;
 //   console.log("Request object-router:", request);
   try {
-    const newBooking = await createBooking(equipmentIDs, startDate, endDate, request);
+    const newBooking = await createBooking(equipmentIDs, startDate, endDate, totalPrice, request);
 	
     response.json(newBooking)
   } catch(error) {
