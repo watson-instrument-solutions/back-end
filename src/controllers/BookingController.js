@@ -161,14 +161,6 @@ router.patch('/admin/update/:id', authenticate, async (request, response) => {
 			updatedBookingData,
 			{ new: true }
 		  );
-	  
-		  // Recalculate total price if start or end date has changed
-		  if (
-			request.body.startDate !== existingBooking.startDate ||
-			request.body.endDate !== existingBooking.endDate
-		  ) {
-			await calculateTotalPrice(updatedBooking);
-		  }
 	
 		response.json(updatedBooking);
 	  } catch (error) {
