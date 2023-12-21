@@ -152,7 +152,7 @@ router.patch('/admin/update/:id', authenticate, async (request, response) => {
 			equipment: request.body.equipment,
 			startDate: request.body.startDate,
 			endDate: request.body.endDate,
-			totalPrice: existingBooking.totalPrice, // Use the existing total price initially
+			totalPrice: request.body.totalPrice,
 		  };
 	  
 		  // Create a new booking with the updated data
