@@ -10,6 +10,7 @@ async function hashPassword(password) {
     return await bcrypt.hash(password, saltRounds);
   }
 
+
 databaseConnect().then(async () => {
     console.log('Seeding DB');
 

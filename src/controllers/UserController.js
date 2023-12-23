@@ -15,12 +15,12 @@ router.get('/all', authenticate, async (request, response) => {
   if (!request.user.admin) {
     return response.status(403).json({ message: 'Unauthorised' });
   }  
-  
+  // find all users
   let result = await User.find({});
   if (!result) {
     return response.status(400).json({ message:'No users found' });
   }
-
+  // return as json
     response.json({
         user: result
     });
@@ -30,11 +30,13 @@ router.get('/all', authenticate, async (request, response) => {
 // GET route for current user for user dashboard
 // localhost:3000/users/me
 router.get('/me', authenticate, async (request, response) => {
+  // find user by id
   try {
     const user = await User.findOne({ _id: request.user._id });
     if (!user) {
       return response.status(404).json({ message: "No user found" });
     }
+    // return as json
     response.json(user);
   } catch (error) {
     console.error(error);
@@ -46,7 +48,7 @@ router.get('/me', authenticate, async (request, response) => {
 //  POST to route CREATE a user
 // localhost3000:users/register-account
 router.post('/register-account', async (request, response) => 
-{
+  {
     // check if user already exists by email address
     try {
       const existingUser = await User.findOne({ email: request.body.email });
@@ -55,7 +57,8 @@ router.post('/register-account', async (request, response) =>
           .status(400)
           .json({ message: "A user with this email address already exists" });
       }
-    //   make sure password is at least 8 characters
+      
+      // make sure password is at least 8 characters
       const { password } = request.body;
       if (password.length < 8) {
         return response
@@ -64,7 +67,7 @@ router.post('/register-account', async (request, response) =>
       }
       // return user with hashed password
       const hashedPassword = await bcrypt.hash(password, 10);
-  
+      // define new user object
       const user = new User({
         firstName: request.body.firstName,
         lastName: request.body.lastName,
@@ -76,8 +79,9 @@ router.post('/register-account', async (request, response) =>
         admin: request.body.admin,
         
       });
-  
+      // save
       const savedUser = await user.save();
+      // return as json
       response.json(savedUser);
 
     } catch (error) {
@@ -92,19 +96,20 @@ router.post('/register-account', async (request, response) =>
 //  POST route to LOG IN
 // localhost3000:users/login
   router.post("/login", async (request, response) => {
+    // find user by email
     const user = await User.findOne({ email: request.body.email });
     if (!user) {
       return response.status(400).json({ message: "User not found" });
     }
-  
+    // check if encrypted pws match
     const pwMatch = await bcrypt.compare(request.body.password, user.password);
     if (!pwMatch) {
       return response.status(400).json({ message: "Incorrect password" });
     }
-  
+    // generate jwt if ok
     let freshJwt = generateJwt(user._id.toString());
 
-	  // respond with the JWT 
+	  // respond with the jwt 
 	    response.json({
 		    jwt: freshJwt
 	  });
@@ -115,8 +120,9 @@ router.post('/register-account', async (request, response) =>
 // localhost:3000/update-me
 router.patch('/update-me', authenticate, async (request, response) => {
   try {
+    // define req body data
     const update = { ...request.body };
-
+    // find by id and update
     let user = await User.findByIdAndUpdate(request.user._id, update, {
       new: true
     })
@@ -124,7 +130,7 @@ router.patch('/update-me', authenticate, async (request, response) => {
     if (!user) {
       return response.status(404).json({ message: "User not found" });
     }
-
+    // return json data to client
     response.json(user);
   } catch (error) {
     console.error(error);
@@ -133,6 +139,7 @@ router.patch('/update-me', authenticate, async (request, response) => {
       .json({ message: "An error occurred while updating" });
   }
 });
+
 
 // DELETE route for current user to delete own account and any associated bookings
 // localhost:3000/users/delete-me
@@ -186,13 +193,15 @@ router.delete("/delete-me", authenticate, async (request, response) => {
   }
 });
 
+
 // DELETE route for admin to delete any user and associated bookings
 // localhost:3000/delete/userId
 router.delete("/delete/:userId", authenticate, async (request, response) => {
+  // check if user is admin
   if (!request.user.admin) {
     return response.status(403).json({ message: "Unauthorized" });
   }
-
+  // find user by id
   const userToDelete = await User.findById(request.params.userId);
   if (!userToDelete) {
     return response.status(404).json({ message: "User not found" });

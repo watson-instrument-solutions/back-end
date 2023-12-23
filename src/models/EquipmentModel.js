@@ -69,7 +69,7 @@ EquipmentSchema.methods.removeBookedDates = async function (startDate, endDate) 
       )
     })
     await this.save() // save the changes after removing the dates
-  }
+};
 
   const Equipment = mongoose.model('Equipment', EquipmentSchema)
 

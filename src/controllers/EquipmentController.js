@@ -1,11 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs');
 
-const { User } = require('../models/UserModel');
 const { Booking } = require('../models/BookingModel');
 const { Equipment } = require('../models/EquipmentModel')
-
 const { authenticate } = require('../functions');
 
 
@@ -36,6 +33,7 @@ router.post('/add-new', authenticate, async (request, response) => {
           .json({ message: "An item of equipment with this name already exists" });
       }
       
+      // define new equipment object
       const newEquipment = new Equipment({ 
         itemName: request.body.itemName,
         description: request.body.description,
@@ -65,7 +63,7 @@ router.patch('/update/:id', authenticate, async (request, response) => {
   if (!request.user.admin) {
     return response.status(403).json({ message: "Unauthorized" });
   }
-
+  // define new object and update with request body data
   try {
     const updatedEquipment = await Equipment.findByIdAndUpdate(
       request.params.id,
@@ -103,6 +101,7 @@ router.delete('/delete/:id', authenticate, async (request, response) => {
   }
 
   try {
+    // find equipment by id
     const equipmentToDelete = await Equipment.findById(request.params.id);
 
     if (!equipmentToDelete) {

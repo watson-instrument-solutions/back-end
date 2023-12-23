@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
 const { User } = require('./models/UserModel');
-const { Equipment } = require('./models/EquipmentModel');
 
 require('dotenv').config();
 
@@ -21,7 +20,7 @@ function generateJwt(userId){
 }
 
 
-
+// function to authenticate user
 async function authenticate(request, response, next) {
 	try {
 	  const token = request.header('Authorization').replace("Bearer ", "");
@@ -35,7 +34,7 @@ async function authenticate(request, response, next) {
 	  if (!user) throw new Error();
   
 	  request.user = user;
-	//   console.log("Request object-middleware:", request);
+	
 	  next();
 	} catch (error) {
 		// troubleshooting jwt issues

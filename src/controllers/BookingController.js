@@ -30,11 +30,9 @@ async function createBooking(equipmentIDs, startDate, endDate, totalPrice, reque
 		throw new Error("End date must be after the start date");
 	  }
   
-	  // Check if equipment exists
+	  // define variable containing equipment objects
 	  const equipmentObjects = await Equipment.find({ _id: { $in: equipmentIDs } });
-	//   if (equipmentObjects.length !== equipmentIDs.length) {
-	// 	throw new Error("One or more specified equipment do not exist");
-	//   }
+	
   
 	  // Check if the user exists
 	  const userExists = await User.exists({ _id: userID });
@@ -42,10 +40,7 @@ async function createBooking(equipmentIDs, startDate, endDate, totalPrice, reque
 		throw new Error("The specified user does not exist");
 	  }
   
-	  // Calculate total price for the booking
-	//   const totalPrice = await calculateTotalPrice(equipmentObjects, startDate, endDate);
-  
-	  // Create a new 'Booking' object
+	  // Create a new booking object
 	  const booking = new Booking({
 		user: userID,
 		equipment: equipmentIDs,
@@ -57,9 +52,8 @@ async function createBooking(equipmentIDs, startDate, endDate, totalPrice, reque
 	  // Log initial state of equipmentObjects
 	  console.log("Initial equipmentObjects:", equipmentObjects);
   
-	  // Update stock and bookedDates for each equipment
+	  // Update stock and bookedDates for each equipment item
 	  for (const equipment of equipmentObjects) {
-		// Update stock and bookedDates for each equipment
 		equipment.stock -= 1;
 		equipment.bookedDates.push({ startDate, endDate });
 		await equipment.save();
@@ -78,7 +72,7 @@ async function createBooking(equipmentIDs, startDate, endDate, totalPrice, reque
 	} catch (error) {
 	  throw new Error("Error creating booking: " + error.message);
 	}
-  }
+};
 
 
 // GET route to view all current bookings from all users, ADMIN only
@@ -88,12 +82,12 @@ router.get('/all', authenticate, async (request, response) => {
     if (!request.user.admin) {
         return response.status(403).json({ message: "Unauthorized" });
       }
-	
+	// search db for bookings
     const bookings = await Booking.find({});
     if (!bookings) {
       return response.status(404).json({ message: 'No bookings found' });
     }
-
+	// return them
     response.json(bookings);
 });
 
@@ -101,9 +95,10 @@ router.get('/all', authenticate, async (request, response) => {
 // GET route to view all bookings associated with current user
 // localhost:3000/booking/my-bookings
 router.get('/my-bookings', authenticate, async (request, response) => {
-   
+	// search db for user bookings
   try {
     const bookings = await Booking.find({ user: request.user._id });
+	// return them
     response.json(bookings)
 
   } catch(error) {
@@ -170,6 +165,7 @@ router.patch('/admin/update/:id', authenticate, async (request, response) => {
     
 });
 
+
 // DELETE route for user to delete their own booking
 // localhost:3000/booking/delete/id
 router.delete("/delete/:id", authenticate, async (request, response) => {
@@ -183,7 +179,7 @@ router.delete("/delete/:id", authenticate, async (request, response) => {
 		.status(404)
 		.json({ message: `Booking ${request.params.id} not found` });
 	}
-  
+	// add equipment ids to new array
 	const equipmentIds = booking.equipment;
 	const equipmentArray = await Equipment.find({ _id: { $in: equipmentIds } });
   
@@ -216,6 +212,7 @@ router.delete("/delete/:id", authenticate, async (request, response) => {
 	});
   });
 
+
 // DELETE route for admin to delete any booking
 // localhost:3000/booking/admin/delete/id
 router.delete('/admin/delete/:id', authenticate, async (request, response) => {
@@ -230,6 +227,7 @@ router.delete('/admin/delete/:id', authenticate, async (request, response) => {
 		  return response.status(404).json({ message: "Booking not found"})
 		}
 
+		// create new array with booking equipment
 		equipmentID = bookingToDelete.equipment;
 		equipment = await Equipment.findById(equipmentID)
 	  
@@ -264,8 +262,6 @@ router.delete('/admin/delete/:id', authenticate, async (request, response) => {
 	  }
     
 });
-
-
 
 
 module.exports = router;

@@ -53,7 +53,7 @@ const UserSchema = new Schema({
 });
 
 
-// const ModelName = mongoose.model('Name that appears in mongosh or Cloud Atlas GUI', SchemaThatModelIsBasedOn);
+// const ModelName = mongoose.model('Name that appears in Cloud Atlas GUI');
 const User = mongoose.model('User', UserSchema);
 
 module.exports = {

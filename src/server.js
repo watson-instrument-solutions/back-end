@@ -2,32 +2,24 @@
 const express = require('express');
 const app = express();
 
-// const cors = require('cors');
-// const corsOptions = {
-// 	origin: "http://localhost:3000", 
-// 	optionSuccessStatus: 200
-// }
-// app.use(cors({origin: true}));
-
+// import cors
 const cors = require('cors');
 
+// set cors to allow access from any origin
 const corsOptions = {
-  origin: "*", // Allow requests from any origin
+  origin: "*", 
   optionSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions));
 
+// import dotenv
 require('dotenv').config();
 
 
 const HOST = process.env.HOST || 'localhost';
 const PORT = process.env.PORT || 3000;
-// Ports can only be a integer between 1001 - 65536 
-// instance.routes(controllers or middleware)
-// instance.use(middleware)
-// instance.use(router)
-// instance.get(express.json())
+
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));

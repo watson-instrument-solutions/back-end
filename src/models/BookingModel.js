@@ -26,11 +26,6 @@ const BookingSchema = new Schema({
         unique: false,
         required: true
     },
-    // bookingName: {
-    //     type: String,
-    //     unique: false,
-    //     required: false
-    // },
     totalPrice: {
         type: Number,
         unique: false,
